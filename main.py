@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask
 from flask_restful import Api, Resource, reqparse, abort, fields, marshal_with
 from flask_sqlalchemy import SQLAlchemy
 
@@ -110,6 +110,14 @@ class Message(Resource):
         db.session.commit()
         return message, 201
 
+    @marshal_with(resource_message_fields)
+    def delete(self, message_id):
+        result = MessageModel.query.filter_by(message_id=message_id).delete()
+        if not result:
+            abort(404, message="Could not find that message_id for deletion")
+        db.session.commit()
+        return '', 204
+
 
 class User(Resource):
     @marshal_with(resource_user_fields)
@@ -128,23 +136,11 @@ class User(Resource):
         return user, 201
 
 
-class Analyst(Resource):
-    analyst = ["Bob", "Charlie", "Dave", "Edgar", "Frank", "Gary", "Harv"]
-
-    def get(self):
-        return jsonify({"analyst": choice(self.analyst)})
-
-
-class Client(Resource):
-    def get(self):
-        pass
-
-
 api.add_resource(Session, "/session/<int:session_id>", "/session/")
 api.add_resource(Message, "/message/<int:message_id>", "/message/")
 api.add_resource(User, "/user/<int:user_id>", "/user/")
 
-api.add_resource(Analyst, "/get_anal/")
+# api.add_resource(Analyst, "/get_anal/")
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -51,15 +51,27 @@ payloads = [
     {'session_id': '2', 'author_id': '1', 'text': 'Your messages is here again.'},
     ]
 
+messages = []
 for payload in payloads:
     session, author = sessions.pop()
     payload['session_id'] = session
     payload['author_id'] = author
     response = requests.post(f"{BASE}message/", data=json.dumps(payload), headers=headers)
     print(response.json())
+    messages.append(response.json()['message_id'])
     sleep(1)
 
+print(messages)
 
+# Retrieve said messages and delete them
+for message in messages:
+    response = requests.get(f"{BASE}/message/{message}")
+    print(response.json())
+    sleep(1)
+    response = requests.delete(f"{BASE}/message/{message}")
+    print(response)
+    sleep(1)
 
-# response = requests.delete(f"{BASE}/3")
-# print(response)
+    # try to get it after it is deleted
+    response = requests.get(f"{BASE}/message/{message}")
+    print(response.json())
