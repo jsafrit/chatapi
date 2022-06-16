@@ -1,41 +1,65 @@
 import requests
 import json
+from time import sleep
 
 
 BASE = "http://127.0.0.1:5000/"
 
-# response = requests.get(BASE + "helloworld/Jojo")
-# print(response.json())
-
-# headers = {'Content-Type': 'application/json'}
-# payload = {'likes': 333, 'name': 'Tester3', 'views': 3333333}
-# response = requests.put(f"{BASE}video/3", data=json.dumps(payload), headers=headers)
-#
-# print(response.json())
-# input()
-
-# payload['name'] = "TwoTester"
-# payload['views'] = 555
-# response = requests.put(BASE + "video/2", data=json.dumps(payload), headers=headers)
-# print(response.json())
-# input()
-
-# response = requests.get(BASE + "video/2")
-# print(response.json())
-#
-
-# response = requests.delete(f"{BASE}video/3")
-# print(response)
-
-for i in range(6):
-    response = requests.get(f"{BASE}video/{str(i)}")
-    print(i, response.json())
-
-response = requests.delete(f"{BASE}video/3")
-# print(response)
-print(response, response.json())
-
 headers = {'Content-Type': 'application/json'}
-payload = {'likes': 111}
-response = requests.patch(f"{BASE}video/1", data=json.dumps(payload), headers=headers)
-print(response.json())
+
+# Add some users
+payloads = [
+    {'name': "Chris", 'role': 'client'},
+    {'name': "Calvin", 'role': 'client'},
+    {'name': "Alan", 'role': 'analyst'},
+    {'name': "Adam", 'role': 'analyst'},
+    ]
+
+clients = []
+analysts = []
+for payload in payloads:
+    response = requests.post(f"{BASE}user/", data=json.dumps(payload), headers=headers)
+    print(response.json())
+    if response.json()['role'] == 'client':
+        clients.append(response.json()['user_id'])
+    else:
+        analysts.append(response.json()['user_id'])
+    sleep(1)
+
+# print(clients, analysts)
+
+# Make some sessions
+payloads = [
+    {'client_id': '1', 'analyst_id': '3'},
+    {'client_id': '1', 'analyst_id': '3'},
+    ]
+
+sessions = []
+for payload in payloads:
+    payload['client_id'] = clients.pop()
+    payload['analyst_id'] = analysts.pop()
+    response = requests.post(f"{BASE}session/", data=json.dumps(payload), headers=headers)
+    print(response.json())
+    sessions.append((response.json()['session_id'], response.json()['client_id']))
+    sleep(1)
+
+print(sessions)
+
+# Make some messages
+payloads = [
+    {'session_id': '1', 'author_id': '2', 'text': 'Your messages is here.'},
+    {'session_id': '2', 'author_id': '1', 'text': 'Your messages is here again.'},
+    ]
+
+for payload in payloads:
+    session, author = sessions.pop()
+    payload['session_id'] = session
+    payload['author_id'] = author
+    response = requests.post(f"{BASE}message/", data=json.dumps(payload), headers=headers)
+    print(response.json())
+    sleep(1)
+
+
+
+# response = requests.delete(f"{BASE}/3")
+# print(response)
